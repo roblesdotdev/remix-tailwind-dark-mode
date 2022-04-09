@@ -10,7 +10,11 @@ import {
 } from "@remix-run/react";
 
 import mainStyles from "~/styles/main.css";
-import { ThemeProvider, useTheme } from "./utils/theme.provider";
+import {
+  NonFlashOfWrongThemeEls,
+  ThemeProvider,
+  useTheme,
+} from "./utils/theme.provider";
 
 export const meta: MetaFunction = () => ({
   charset: "utf-8",
@@ -29,6 +33,7 @@ function App() {
       <head>
         <Meta />
         <Links />
+        <NonFlashOfWrongThemeEls />
       </head>
       <body>
         <Outlet />

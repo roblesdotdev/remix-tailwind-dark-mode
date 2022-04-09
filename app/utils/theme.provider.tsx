@@ -10,14 +10,46 @@ type ThemeContextType = [Theme | null, Dispatch<SetStateAction<Theme | null>>];
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+const prefersDarkMQ = "(prefers-color-scheme: dark)";
+const getPreferredTheme = () =>
+  window.matchMedia(prefersDarkMQ).matches ? Theme.DARK : Theme.LIGHT;
+
 function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme | null>(Theme.LIGHT);
+  const [theme, setTheme] = useState<Theme | null>(() => {
+    if (typeof window !== "object") {
+      return null;
+    }
+
+    return getPreferredTheme();
+  });
 
   return (
     <ThemeContext.Provider value={[theme, setTheme]}>
       {children}
     </ThemeContext.Provider>
   );
+}
+
+const clientThemeCode = `
+;(() => {
+  const theme = window.matchMedia(${JSON.stringify(prefersDarkMQ)}).matches
+    ? 'dark'
+    : 'light';
+  const cl = document.documentElement.classList;
+  const themeAlreadyApplied = cl.contains('light') || cl.contains('dark');
+  if (themeAlreadyApplied) {
+    // this script shouldn't exist if the theme is already applied!
+    console.warn(
+      "Hi there, could you let Matt know you're seeing this message? Thanks!",
+    );
+  } else {
+    cl.add(theme);
+  }
+})();
+`;
+
+function NonFlashOfWrongThemeEls() {
+  return <script dangerouslySetInnerHTML={{ __html: clientThemeCode }} />;
 }
 
 function useTheme() {
@@ -28,4 +60,4 @@ function useTheme() {
   return context;
 }
 
-export { Theme, ThemeProvider, useTheme };
+export { NonFlashOfWrongThemeEls, Theme, ThemeProvider, useTheme };
