@@ -1,5 +1,9 @@
 import clsx from "clsx";
-import type { LinksFunction, MetaFunction } from "@remix-run/node";
+import type {
+  LinksFunction,
+  LoaderFunction,
+  MetaFunction,
+} from "@remix-run/node";
 import {
   Links,
   LiveReload,
@@ -7,14 +11,17 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
 } from "@remix-run/react";
 
 import mainStyles from "~/styles/main.css";
 import {
   NonFlashOfWrongThemeEls,
+  type Theme,
   ThemeProvider,
   useTheme,
-} from "./utils/theme.provider";
+} from "./utils/theme-provider";
+import { getThemeSession } from "./utils/theme.server";
 
 export const meta: MetaFunction = () => ({
   charset: "utf-8",
@@ -26,6 +33,20 @@ export const links: LinksFunction = () => [
   { rel: "stylesheet", href: mainStyles },
 ];
 
+export type LoaderData = {
+  theme: Theme | null;
+};
+
+export const loader: LoaderFunction = async ({ request }) => {
+  const themeSession = await getThemeSession(request);
+
+  const data: LoaderData = {
+    theme: themeSession.getTheme(),
+  };
+
+  return data;
+};
+
 function App() {
   const [theme] = useTheme();
   return (
@@ -33,7 +54,7 @@ function App() {
       <head>
         <Meta />
         <Links />
-        <NonFlashOfWrongThemeEls />
+        <NonFlashOfWrongThemeEls ssrTheme={Boolean(theme)} />
       </head>
       <body>
         <Outlet />
@@ -46,8 +67,9 @@ function App() {
 }
 
 export default function AppWithProviders() {
+  const { theme } = useLoaderData<LoaderData>();
   return (
-    <ThemeProvider>
+    <ThemeProvider specifiedTheme={theme}>
       <App />
     </ThemeProvider>
   );
